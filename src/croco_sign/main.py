@@ -16,7 +16,7 @@ from croco_sign.infrastructure.storage.memory_job_store import InMemoryJobStore
 from croco_sign.infrastructure.storage.video_storage import VideoStorage
 from croco_sign.infrastructure.translators.registry import build_default_registry
 from croco_sign.services.translation_service import TranslationService
-
+from croco_sign.infrastructure.translators.deepl_translator import DeeplSpokenLanguageTranslator
 
 def create_app(
     settings: Settings | None = None,
@@ -38,13 +38,8 @@ def create_app(
         video_storage = VideoStorage(max_bytes=settings.max_upload_bytes)
         translator = spoken_translator
         if translator is None:
-            # Lazy import so transformers/the 1.3B model never load at import time
-            # (or in tests, which inject their own translator).
-            from croco_sign.infrastructure.translators.nllm import (
-                NLLMSpokenLanguageTranslator,
-            )
-
-            translator = NLLMSpokenLanguageTranslator()
+            translator = DeeplSpokenLanguageTranslator(auth_key=settings.deepl_key)
+        
         app.state.video_storage = video_storage
         app.state.translation_service = TranslationService(
             registry=registry,

@@ -33,6 +33,8 @@ class Settings(BaseSettings):
         "video/webm",
         "video/x-matroska",
     )
+    
+    deepl_key: str
 
 
 @lru_cache
