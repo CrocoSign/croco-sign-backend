@@ -6,6 +6,7 @@ from croco_sign.domain.exceptions import ModelNotFoundError
 from croco_sign.domain.models import ModelInfo
 from croco_sign.domain.ports import PJMTranslator
 from croco_sign.infrastructure.translators.mock_translator import MockPJMTranslator
+from croco_sign.infrastructure.translators.unified import UnifiedCrocoTranslator
 
 
 class TranslatorRegistry:
@@ -34,4 +35,6 @@ def build_default_registry() -> TranslatorRegistry:
     """Create the registry with all translators wired up."""
     registry = TranslatorRegistry()
     registry.register("mock", MockPJMTranslator())
+    registry.register("uni-sign-si", UnifiedCrocoTranslator(model_name="unisign-pjm-si", endpoint="http://100.117.203.112:8000/translate"))
+    registry.register("uni-sign-ms", UnifiedCrocoTranslator(model_name="unisign-pjm-ms", endpoint="http://100.117.203.112:8000/translate"))
     return registry
