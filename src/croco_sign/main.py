@@ -11,14 +11,22 @@ from croco_sign.api.errors import register_exception_handlers
 from croco_sign.api.routers import jobs, translation
 from croco_sign.core.config import Settings, get_settings
 from croco_sign.core.logging import configure_logging
+from croco_sign.domain.ports import SpokenLanguageTranslator
 from croco_sign.infrastructure.storage.memory_job_store import InMemoryJobStore
 from croco_sign.infrastructure.storage.video_storage import VideoStorage
 from croco_sign.infrastructure.translators.registry import build_default_registry
 from croco_sign.services.translation_service import TranslationService
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
-    """Build and wire the FastAPI application."""
+def create_app(
+    settings: Settings | None = None,
+    spoken_translator: SpokenLanguageTranslator | None = None,
+) -> FastAPI:
+    """Build and wire the FastAPI application.
+
+    `spoken_translator` can be injected (e.g. by tests) to avoid loading the
+    production model; when omitted, the real NLLB-backed translator is built.
+    """
     configure_logging()
     settings = settings or get_settings()
 
@@ -28,11 +36,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         registry = build_default_registry()
         job_store = InMemoryJobStore()
         video_storage = VideoStorage(max_bytes=settings.max_upload_bytes)
+        translator = spoken_translator
+        if translator is None:
+            # Lazy import so transformers/the 1.3B model never load at import time
+            # (or in tests, which inject their own translator).
+            from croco_sign.infrastructure.translators.nllm import (
+                NLLMSpokenLanguageTranslator,
+            )
+
+            translator = NLLMSpokenLanguageTranslator()
         app.state.video_storage = video_storage
         app.state.translation_service = TranslationService(
             registry=registry,
             job_store=job_store,
             video_storage=video_storage,
+            spoken_translator=translator,
         )
         yield
 

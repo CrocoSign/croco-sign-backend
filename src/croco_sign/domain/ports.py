@@ -4,19 +4,21 @@ from __future__ import annotations
 
 from typing import AsyncIterator, Protocol, runtime_checkable
 
-from croco_sign.domain.models import Job, Language, TranslationResult
+from croco_sign.domain.models import Job
 from croco_sign.domain.models import SpokenTranslationInput
 
 @runtime_checkable
 class PJMTranslator(Protocol):
-    """A model that translates Polish Sign Language video into spoken text.
+    """A model that recognizes Polish Sign Language video into English text.
 
     Implementations are typically blocking/CPU-bound, so the service layer runs
-    `translate` in a worker thread. The registered model name is owned by the
+    `translate` in a worker thread. Translating the recognized English text into
+    the caller's target language is a separate concern handled by a
+    `SpokenLanguageTranslator`. The registered model name is owned by the
     registry, not the translator.
     """
 
-    def translate(self, video: bytes, target_language: Language) -> TranslationResult:
+    def translate(self, video: bytes) -> str:
         ...
 
 

@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import replace
 from pathlib import Path
 from typing import AsyncIterator
 from uuid import uuid4
 
-from croco_sign.domain.models import Job, Language, ModelInfo
-from croco_sign.domain.ports import JobStore
+from croco_sign.domain.models import (
+    Job,
+    Language,
+    ModelInfo,
+    SpokenTranslationInput,
+    TranslationResult,
+)
+from croco_sign.domain.ports import JobStore, SpokenLanguageTranslator
 from croco_sign.infrastructure.storage.video_storage import VideoStorage
 from croco_sign.infrastructure.translators.registry import TranslatorRegistry
 
@@ -25,10 +30,12 @@ class TranslationService:
         registry: TranslatorRegistry,
         job_store: JobStore,
         video_storage: VideoStorage,
+        spoken_translator: SpokenLanguageTranslator,
     ) -> None:
         self._registry = registry
         self._job_store = job_store
         self._storage = video_storage
+        self._spoken_translator = spoken_translator
 
     def list_models(self) -> list[ModelInfo]:
         return self._registry.list_models()
@@ -67,14 +74,25 @@ class TranslationService:
         await self._job_store.update(job)
 
         try:
-            translator = self._registry.get(job.model_name)
+            pjm = self._registry.get(job.model_name)
             video = await asyncio.to_thread(self._storage.read_bytes, video_path)
-            result = await asyncio.to_thread(
-                translator.translate, video, job.target_language
+            # Stage 1: recognize the sign video into English text.
+            recognized = await asyncio.to_thread(pjm.translate, video)
+            # Stage 2: translate the English text into the target language.
+            translated = await asyncio.to_thread(
+                self._spoken_translator.translate,
+                SpokenTranslationInput(
+                    target_language=job.target_language, text=recognized
+                ),
             )
             # Stamp the registered model name; translators don't know their own name.
-            await asyncio.sleep(5)
-            job.mark_succeeded(replace(result, model_name=job.model_name))
+            job.mark_succeeded(
+                TranslationResult(
+                    text=translated,
+                    target_language=job.target_language,
+                    model_name=job.model_name,
+                )
+            )
         except Exception as exc:  # noqa: BLE001 - surface any failure on the job
             logger.exception("Translation job %s failed", job_id)
             job.mark_failed(str(exc))
