@@ -1,0 +1,49 @@
+"""Domain exceptions. The API layer maps these to HTTP responses."""
+
+from __future__ import annotations
+
+
+class DomainError(Exception):
+    """Base class for all domain-level errors."""
+
+    code: str = "domain_error"
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
+class ModelNotFoundError(DomainError):
+    """Requested translation model is not registered."""
+
+    code = "model_not_found"
+
+
+class JobNotFoundError(DomainError):
+    """Requested job id does not exist."""
+
+    code = "job_not_found"
+
+
+class UnsupportedMediaError(DomainError):
+    """Uploaded file is not an accepted video type."""
+
+    code = "unsupported_media"
+
+
+class InvalidLanguageError(DomainError):
+    """Requested target language is not supported."""
+
+    code = "invalid_language"
+
+
+class PayloadTooLargeError(DomainError):
+    """Uploaded file exceeds the configured size limit."""
+
+    code = "payload_too_large"
+
+
+class TranslationFailedError(DomainError):
+    """The translator failed to produce a result."""
+
+    code = "translation_failed"
