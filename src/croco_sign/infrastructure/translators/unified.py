@@ -10,11 +10,11 @@ class UnifiedCrocoTranslator:
         self.endpoint = endpoint
 
     def translate(self, video: bytes) -> str:
-        files = {"video": ("video.mp4", video, "video/mp4")}
-        payload = {
-            "name": self.model_name
+        files = {
+            "video": ("video.mp4", video, "video/mp4"),
+            "model": (None, self.model_name),
         }
-        response = httpx.Client(timeout=600).post(self.endpoint, files=files, data=payload)
+        response = httpx.Client(timeout=600).post(self.endpoint, files=files)
 
         body = json.loads(response.read())
 
