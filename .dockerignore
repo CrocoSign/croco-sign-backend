@@ -1,0 +1,44 @@
+# Keep the build context small and the image clean.
+
+# Virtual environments (the image builds its own at /app/.venv)
+.venv/
+venv/
+env/
+
+# Python caches / bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# VCS
+.git/
+.gitignore
+
+# Coverage / test reports
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Temp uploads written by VideoStorage
+croco-*.video
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Docker files not needed at build time
+# (README.md is required: pyproject.toml references it as the project readme.)
+Dockerfile
+.dockerignore
+docker-compose.yml

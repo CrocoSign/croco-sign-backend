@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 
+import httpx
+import pytest
 from fastapi.testclient import TestClient
+
+from croco_sign.api.routers import jobs as jobs_router
+from croco_sign.domain.models import Language, TranslationResult
+from croco_sign.main import create_app
 
 
 def _submit(client: TestClient) -> str:
@@ -33,6 +40,55 @@ def test_sse_streams_until_succeeded(client: TestClient) -> None:
     assert events, "expected at least one SSE data event"
     assert events[-1]["status"] == "succeeded"
     assert events[-1]["result"]["text"]
+
+
+async def test_sse_survives_heartbeat_for_slow_job(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Regression: a job still running when a heartbeat fires must keep its stream
+    # and still deliver the terminal event. Previously the heartbeat cancelled
+    # the subscription (asyncio.wait_for), tearing down the stream mid-job — only
+    # the slow PL path stayed running long enough to hit it. TestClient can't
+    # reproduce this (it runs background tasks to completion before returning),
+    # so we drive the job lifecycle directly while streaming over ASGI.
+    monkeypatch.setattr(jobs_router, "_HEARTBEAT_SECONDS", 0.1)
+
+    app = create_app()
+    async with app.router.lifespan_context(app):
+        service = app.state.translation_service
+        job = await service.submit("mock", Language.POLISH)
+
+        async def finish_after_heartbeat() -> None:
+            await asyncio.sleep(0.3)  # outlast the 0.1s heartbeat window
+            current = await service.get_job(job.id)
+            current.mark_succeeded(
+                TranslationResult(
+                    text="[pl] done",
+                    target_language=Language.POLISH,
+                    model_name="mock",
+                )
+            )
+            await service._job_store.update(current)
+
+        finisher = asyncio.create_task(finish_after_heartbeat())
+        events: list[dict] = []
+        saw_keep_alive = False
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            async with client.stream("GET", f"/jobs/{job.id}/events") as stream:
+                assert stream.status_code == 200
+                async for line in stream.aiter_lines():
+                    if line.startswith(":"):
+                        saw_keep_alive = True
+                    elif line.startswith("data:"):
+                        event = json.loads(line[len("data:"):].strip())
+                        events.append(event)
+                        if event["status"] in ("succeeded", "failed"):
+                            break
+        await finisher
+
+    assert saw_keep_alive, "expected a keep-alive while the slow job was running"
+    assert events[-1]["status"] == "succeeded"
 
 
 def test_sse_unknown_job_returns_404(client: TestClient) -> None:

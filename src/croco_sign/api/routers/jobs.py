@@ -39,25 +39,36 @@ async def job_events(
 
     async def event_stream() -> AsyncIterator[str]:
         updates = service.stream_job(job_id).__aiter__()
+        # Pull the next update in its own task. asyncio.wait() with a timeout
+        # leaves a pending task untouched, so the subscription survives across
+        # heartbeats. (asyncio.wait_for would cancel it, tearing down the
+        # underlying generator and unsubscribing it from the job store.)
+        next_update = asyncio.ensure_future(updates.__anext__())
         try:
             while True:
-                try:
-                    job = await asyncio.wait_for(
-                        updates.__anext__(), timeout=_HEARTBEAT_SECONDS
-                    )
-                except asyncio.TimeoutError:
+                done, _ = await asyncio.wait(
+                    {next_update}, timeout=_HEARTBEAT_SECONDS
+                )
+                if not done:
                     if await request.is_disconnected():
                         break
                     yield ": keep-alive\n\n"
                     continue
+
+                try:
+                    job = next_update.result()
                 except StopAsyncIteration:
                     break
+
+                # Schedule the next pull before yielding so no update is missed.
+                next_update = asyncio.ensure_future(updates.__anext__())
 
                 payload = JobStatusResponse.from_domain(job).model_dump_json()
                 yield f"data: {payload}\n\n"
                 if job.is_terminal:
                     break
         finally:
+            next_update.cancel()
             await updates.aclose()
 
     return StreamingResponse(
