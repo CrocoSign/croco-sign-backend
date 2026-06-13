@@ -36,19 +36,16 @@ async def translate(
     request: Request,
     background_tasks: BackgroundTasks,
     video: UploadFile,
-    target_language: str = Form(default=None),
+    target_language: str = Form(...),
     service: TranslationService = Depends(get_translation_service),
     storage: VideoStorage = Depends(get_video_storage),
     settings: Settings = Depends(get_app_settings),
 ) -> TranslateAccepted:
-    # Resolve target language (default from settings).
-    if target_language is None:
-        language = settings.default_target_language
-    else:
-        try:
-            language = Language.from_code(target_language)
-        except ValueError as exc:
-            raise InvalidLanguageError(str(exc)) from exc
+    # Resolve target .
+    try:
+        language = Language.from_code(target_language)
+    except ValueError as exc:
+        raise InvalidLanguageError(str(exc)) from exc
 
     # Fail fast on unknown model and unsupported media before persisting the upload.
     service.ensure_model_exists(model_name)

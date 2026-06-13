@@ -21,7 +21,6 @@ class TranslationResultResponse(BaseModel):
     text: str
     target_language: Language
     model_name: str
-    confidence: float | None = None
 
     @classmethod
     def from_domain(cls, result: TranslationResult) -> "TranslationResultResponse":
@@ -29,7 +28,6 @@ class TranslationResultResponse(BaseModel):
             text=result.text,
             target_language=result.target_language,
             model_name=result.model_name,
-            confidence=result.confidence,
         )
 
 

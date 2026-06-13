@@ -73,6 +73,7 @@ class TranslationService:
                 translator.translate, video, job.target_language
             )
             # Stamp the registered model name; translators don't know their own name.
+            await asyncio.sleep(5)
             job.mark_succeeded(replace(result, model_name=job.model_name))
         except Exception as exc:  # noqa: BLE001 - surface any failure on the job
             logger.exception("Translation job %s failed", job_id)

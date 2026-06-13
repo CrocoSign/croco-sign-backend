@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import AsyncIterator, Protocol, runtime_checkable
 
 from croco_sign.domain.models import Job, Language, TranslationResult
-
+from croco_sign.domain.models import SpokenTranslationInput
 
 @runtime_checkable
 class PJMTranslator(Protocol):
@@ -38,4 +38,9 @@ class JobStore(Protocol):
 
         Raises JobNotFoundError if the job does not exist.
         """
+        ...
+
+
+class SpokenLanguageTranslator(Protocol):
+    def translate(self, input: SpokenTranslationInput) -> str:
         ...

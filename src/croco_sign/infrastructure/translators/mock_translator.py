@@ -28,5 +28,4 @@ class MockPJMTranslator:
         return TranslationResult(
             text=text,
             target_language=target_language,
-            confidence=0.99,
         )

@@ -5,9 +5,12 @@ description = "Backend that translates Polish Sign Language (PJM) video into spo
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "accelerate>=1.14.0",
+    "bitsandbytes>=0.49.2",
     "fastapi>=0.136.3",
     "pydantic-settings>=2.5.0",
     "python-multipart>=0.0.9",
+    "transformers>=5.12.0",
     "uvicorn[standard]>=0.30.0",
 ]
 

@@ -16,7 +16,6 @@ class Language(str, Enum):
 
     POLISH = "pl"
     ENGLISH = "en"
-    GERMAN = "de"
 
     @classmethod
     def from_code(cls, code: str) -> "Language":
@@ -56,7 +55,6 @@ class TranslationResult:
 
     text: str
     target_language: Language
-    confidence: float | None = None
     model_name: str = ""
 
 
@@ -90,3 +88,8 @@ class Job:
         self.status = JobStatus.FAILED
         self.error = error
         self.updated_at = _utcnow()
+
+@dataclass
+class SpokenTranslationInput:
+    target_language: Language
+    text: str 

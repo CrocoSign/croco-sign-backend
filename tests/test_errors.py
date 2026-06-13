@@ -9,6 +9,7 @@ def test_unknown_model_returns_404(client: TestClient) -> None:
     resp = client.post(
         "/models/does-not-exist/translate",
         files={"video": ("clip.mp4", b"abc", "video/mp4")},
+        data={"target_language": "en"},
     )
     assert resp.status_code == 404
     assert resp.json()["code"] == "model_not_found"
@@ -24,6 +25,7 @@ def test_unsupported_media_returns_415(client: TestClient) -> None:
     resp = client.post(
         "/models/mock/translate",
         files={"video": ("notes.txt", b"abc", "text/plain")},
+        data={"target_language": "en"},
     )
     assert resp.status_code == 415
     assert resp.json()["code"] == "unsupported_media"
