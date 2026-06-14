@@ -12,6 +12,7 @@ from fastapi import Depends, Request
 from croco_sign.core.config import Settings, get_settings
 from croco_sign.domain.ports import JobRunner, VideoStore
 from croco_sign.infrastructure.storage.video_storage import VideoStorage
+from croco_sign.services.segment_service import SegmentService
 from croco_sign.services.translation_service import TranslationService
 
 
@@ -31,6 +32,10 @@ def get_job_runner(request: Request) -> JobRunner:
     return request.app.state.job_runner
 
 
+def get_segment_service(request: Request) -> SegmentService:
+    return request.app.state.segment_service
+
+
 def get_app_settings() -> Settings:
     return get_settings()
 
@@ -40,6 +45,7 @@ __all__ = [
     "get_video_reader",
     "get_video_store",
     "get_job_runner",
+    "get_segment_service",
     "get_app_settings",
     "Depends",
 ]

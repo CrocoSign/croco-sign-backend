@@ -53,3 +53,21 @@ class VideoNotFoundError(DomainError):
     """Stored video bytes are missing (never stored, or expired)."""
 
     code = "video_not_found"
+
+
+class SegmentNotFoundError(DomainError):
+    """Requested segment id does not exist in the catalog."""
+
+    code = "segment_not_found"
+
+
+class SegmentVideoNotFoundError(DomainError):
+    """No video clip for the requested segment exists in the dataset."""
+
+    code = "segment_video_not_found"
+
+
+class SegmentVideoProcessingError(DomainError):
+    """A segment clip was found but could not be transcoded for delivery."""
+
+    code = "segment_video_processing_error"

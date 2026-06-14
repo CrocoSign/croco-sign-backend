@@ -65,7 +65,7 @@ Settings load from the environment with the `CROCO_` prefix (or a `.env` file). 
 | `GET` | `/jobs/{job_id}/events` | **SSE** stream of status changes until terminal |
 | `GET` | `/health` | Liveness check |
 
-Supported target languages: `pl`, `en`, `de`. Job lifecycle: `pending → running →
+Supported target languages: `pl`, `en`. Job lifecycle: `pending → running →
 succeeded | failed`.
 
 ### Subscribing from a frontend (SSE)
@@ -81,23 +81,6 @@ es.onmessage = (e) => {
 The stream emits the current snapshot immediately, then one event per status change, and
 closes on a terminal status. Polling `GET /jobs/{job_id}` is an equivalent fallback.
 
-## ⚠️ Important caveat: SSE & job store are single-process
-
-The job store is **in-memory** and translation runs via FastAPI `BackgroundTasks` in the
-**same process**. This is correct only for a **single application instance / single
-worker**.
-
-With more than one Uvicorn worker (or multiple instances behind a load balancer):
-
-- A poll or SSE connection can be routed to a worker that never processed the job, so it
-  returns a spurious **404** or never sees updates.
-- SSE pub/sub notifications only reach subscribers connected to the worker that ran the job.
-
-**Do not run this with `--workers > 1` or horizontally scaled as-is.** To scale, replace
-the in-memory adapter with a shared store + pub/sub (e.g. Redis) and move processing to a
-real task queue. The `JobStore` port is designed so this swap won't touch the domain,
-service, or API layers.
-
 ## Testing
 
 ```bash
@@ -105,10 +88,3 @@ uv run pytest
 ```
 
 Covers the end-to-end async flow, error paths (404 / 413 / 415 / 422), and SSE + CORS.
-
-## Status / roadmap
-
-The only translator today is `mock` (a deterministic stub — no real inference). Add a real
-model by implementing the `PJMTranslator` port and registering it in
-`infrastructure/translators/registry.py`. Out of scope for now: real PJM model integration,
-persistent store + worker queue (see caveat above), auth, and rate limiting.

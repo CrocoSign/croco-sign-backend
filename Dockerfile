@@ -14,6 +14,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# ffmpeg: used to losslessly remux MPEG-TS segment clips to MP4 for browser playback.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies first, in their own layer, so editing app code doesn't
 # bust the (slow) dependency-resolution/download cache.
 RUN --mount=type=cache,target=/root/.cache/uv \

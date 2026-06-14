@@ -6,7 +6,18 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from croco_sign.domain.models import Job, JobStatus, Language, ModelInfo, TranslationResult
+from croco_sign.domain.models import (
+    Job,
+    JobStatus,
+    Language,
+    ModelInfo,
+    Segment,
+    SegmentPage,
+    SegmentSummary,
+    Signer,
+    TranslationResult,
+    VideoMetadata,
+)
 
 
 class ModelInfoResponse(BaseModel):
@@ -70,3 +81,97 @@ class JobStatusResponse(BaseModel):
 class ErrorResponse(BaseModel):
     code: str
     message: str
+
+
+# --- Segments ---------------------------------------------------------------
+# These DTOs are the single whitelist of what reaches the client. The domain
+# `Segment` aggregate stays complete; to change exposed fields, edit the relevant
+# `*Response` model (and its `from_domain`) — the domain and SQL are untouched.
+
+
+class SegmentSummaryResponse(BaseModel):
+    id: int
+    segment_id: str
+    sentence: str
+    age: str
+    sex: str
+
+    @classmethod
+    def from_domain(cls, summary: SegmentSummary) -> "SegmentSummaryResponse":
+        return cls(
+            id=summary.id,
+            segment_id=summary.segment_id,
+            sentence=summary.sentence,
+            age=summary.age,
+            sex=summary.sex,
+        )
+
+
+class SegmentPageResponse(BaseModel):
+    items: list[SegmentSummaryResponse]
+    total: int
+
+    @classmethod
+    def from_domain(cls, page: SegmentPage) -> "SegmentPageResponse":
+        return cls(
+            items=[SegmentSummaryResponse.from_domain(s) for s in page.items],
+            total=page.total,
+        )
+
+
+class SignerResponse(BaseModel):
+    id: int
+    speaker_id: str
+    sex: str
+    age: str
+    special_case: str
+
+    @classmethod
+    def from_domain(cls, signer: Signer) -> "SignerResponse":
+        return cls(
+            id=signer.id,
+            speaker_id=signer.speaker_id,
+            sex=signer.sex,
+            age=signer.age,
+            special_case=signer.special_case,
+        )
+
+
+class VideoMetadataResponse(BaseModel):
+    id: int
+    video_id: int
+    video_url: str
+    subtitles_url: str
+    video_type: str
+    task_id: int
+    speaker_side: str
+    signer: SignerResponse
+
+    @classmethod
+    def from_domain(cls, metadata: VideoMetadata) -> "VideoMetadataResponse":
+        return cls(
+            id=metadata.id,
+            video_id=metadata.video_id,
+            video_url=metadata.video_url,
+            subtitles_url=metadata.subtitles_url,
+            video_type=metadata.video_type,
+            task_id=metadata.task_id,
+            speaker_side=metadata.speaker_side,
+            signer=SignerResponse.from_domain(metadata.signer),
+        )
+
+
+class SegmentDetailResponse(BaseModel):
+    id: int
+    segment_id: str
+    sentence: str
+    video_metadata: VideoMetadataResponse
+
+    @classmethod
+    def from_domain(cls, segment: Segment) -> "SegmentDetailResponse":
+        return cls(
+            id=segment.id,
+            segment_id=segment.segment_id,
+            sentence=segment.sentence,
+            video_metadata=VideoMetadataResponse.from_domain(segment.video_metadata),
+        )

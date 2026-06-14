@@ -45,6 +45,15 @@ class Settings(BaseSettings):
     # How long an uploaded video lingers in Redis before the worker consumes it.
     video_ttl_seconds: int = 3600
 
+    # Segment catalog: local read-only SQLite built from the corpus CSV + the HF
+    # dataset (see scripts/). Override via CROCO_SQLITE_DB_PATH.
+    sqlite_db_path: str = "data/pjm.db"
+    # HuggingFace WebDataset holding the segment mp4 clips.
+    hf_segments_repo_id: str = "croco-corp/pjm-segments"
+    hf_segments_split: str = "train"
+    # How long a fetched segment clip lingers in the Redis read-through cache.
+    segment_video_ttl_seconds: int = 24 * 3600
+
 
 @lru_cache
 def get_settings() -> Settings:

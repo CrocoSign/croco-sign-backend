@@ -92,4 +92,62 @@ class Job:
 @dataclass
 class SpokenTranslationInput:
     target_language: Language
-    text: str 
+    text: str
+
+
+@dataclass(frozen=True)
+class Signer:
+    """A person who produced sign-language recordings."""
+
+    id: int
+    speaker_id: str
+    sex: str
+    age: str
+    special_case: str
+
+
+@dataclass(frozen=True)
+class VideoMetadata:
+    """Metadata for a source corpus recording, with its signer composed in."""
+
+    id: int
+    video_id: int
+    video_url: str
+    subtitles_url: str
+    video_type: str
+    task_id: int
+    speaker_side: str
+    signer: Signer
+
+
+@dataclass(frozen=True)
+class Segment:
+    """A single sentence-level clip cut from a recording.
+
+    The full aggregate used by the detail view: it nests the recording metadata,
+    which in turn nests the signer. `segment_id` is the WebDataset `__key__`.
+    """
+
+    id: int
+    segment_id: str
+    sentence: str
+    video_metadata: VideoMetadata
+
+
+@dataclass(frozen=True)
+class SegmentSummary:
+    """Lightweight list projection — only the columns the list query selects."""
+
+    id: int
+    segment_id: str
+    sentence: str
+    age: str
+    sex: str
+
+
+@dataclass(frozen=True)
+class SegmentPage:
+    """A page of segment summaries plus the unfiltered total for pagination UIs."""
+
+    items: list[SegmentSummary]
+    total: int

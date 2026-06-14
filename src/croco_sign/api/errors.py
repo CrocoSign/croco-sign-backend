@@ -12,6 +12,9 @@ from croco_sign.domain.exceptions import (
     JobNotFoundError,
     ModelNotFoundError,
     PayloadTooLargeError,
+    SegmentNotFoundError,
+    SegmentVideoNotFoundError,
+    SegmentVideoProcessingError,
     TranslationFailedError,
     UnsupportedMediaError,
 )
@@ -23,6 +26,9 @@ _STATUS_MAP: dict[type[DomainError], int] = {
     InvalidLanguageError: 422,
     PayloadTooLargeError: 413,
     TranslationFailedError: 422,
+    SegmentNotFoundError: status.HTTP_404_NOT_FOUND,
+    SegmentVideoNotFoundError: status.HTTP_404_NOT_FOUND,
+    SegmentVideoProcessingError: status.HTTP_502_BAD_GATEWAY,
 }
 
 

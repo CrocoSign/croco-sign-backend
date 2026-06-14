@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import AsyncIterator, Protocol, runtime_checkable
 
 from croco_sign.domain.models import Job
+from croco_sign.domain.models import Segment, SegmentPage
 from croco_sign.domain.models import SpokenTranslationInput
 
 @runtime_checkable
@@ -75,4 +76,28 @@ class JobRunner(Protocol):
     """
 
     async def run(self, job_id: str) -> None:
+        ...
+
+
+class SegmentRepository(Protocol):
+    """Read port for the local relational segment catalog (SQLite today)."""
+
+    async def list(self, limit: int, offset: int) -> SegmentPage:
+        """Return a page of segment summaries plus the unfiltered total count."""
+        ...
+
+    async def get_by_id(self, id: int) -> Segment:
+        """Return the full segment aggregate, or raise SegmentNotFoundError."""
+        ...
+
+
+class SegmentVideoSource(Protocol):
+    """Fetches raw mp4 bytes for a segment, located by its textual segment_id.
+
+    Backed by the HuggingFace WebDataset; a caching decorator may wrap it. The
+    `segment_id` is the dataset `__key__` (e.g. "004_000_M").
+    """
+
+    async def get_video(self, segment_id: str) -> bytes:
+        """Return raw mp4 bytes, or raise SegmentVideoNotFoundError."""
         ...

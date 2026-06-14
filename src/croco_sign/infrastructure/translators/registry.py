@@ -38,5 +38,5 @@ def build_default_registry() -> TranslatorRegistry:
     registry.register("uni-sign-si", UnifiedCrocoTranslator(model_name="unisign-pjm-openasl-si", endpoint="http://100.117.203.112:8000/translate"))
     registry.register("uni-sign-ms", UnifiedCrocoTranslator(model_name="unisign-pjm-openasl-ms", endpoint="http://100.117.203.112:8000/translate"))
     registry.register("spamo-si", UnifiedCrocoTranslator(model_name="spamo-pjm-phoenix-si", endpoint="http://100.117.203.112:8000/translate"))
-    registry.register("ddd", UnifiedCrocoTranslator(model_name="dsdsd", endpoint="http://100.117.203.112:8000/translate"))
+
     return registry
