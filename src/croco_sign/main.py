@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from croco_sign.api.errors import register_exception_handlers
-from croco_sign.api.routers import jobs, segments, translation
+from croco_sign.api.routers import jobs, metrics, segments, translation
 from croco_sign.core.config import Settings, get_settings
 from croco_sign.core.logging import configure_logging
 from croco_sign.domain.ports import SegmentVideoSource, SpokenLanguageTranslator
@@ -26,12 +26,16 @@ from croco_sign.infrastructure.storage.memory_job_store import InMemoryJobStore
 from croco_sign.infrastructure.storage.memory_video_store import InMemoryVideoStore
 from croco_sign.infrastructure.storage.redis_job_store import RedisJobStore
 from croco_sign.infrastructure.storage.redis_video_store import RedisVideoStore
+from croco_sign.infrastructure.storage.sqlite_metrics_repository import (
+    SqliteMetricsRepository,
+)
 from croco_sign.infrastructure.storage.sqlite_segment_repository import (
     SqliteSegmentRepository,
 )
 from croco_sign.infrastructure.storage.video_storage import VideoStorage
 from croco_sign.infrastructure.translators.registry import build_default_registry
 from croco_sign.services.job_runner import ArqJobRunner, EagerJobRunner
+from croco_sign.services.metrics_service import MetricsService
 from croco_sign.services.segment_service import SegmentService
 from croco_sign.services.translation_service import TranslationService
 from croco_sign.infrastructure.translators.deepl_translator import DeeplSpokenLanguageTranslator
@@ -70,6 +74,12 @@ def create_app(
         # Segment catalog (identical in both branches) and clip source. The bare
         # source streams from HuggingFace; production wraps it in a Redis cache.
         segment_repo = SqliteSegmentRepository(db_path=settings.sqlite_db_path)
+        # Benchmark metrics catalog: read-only SQLite + local figure files, so it
+        # is identical in both branches (no Redis needed).
+        metrics_service = MetricsService(
+            SqliteMetricsRepository(db_path=settings.sqlite_db_path),
+            settings.resources_base_dir,
+        )
         if segment_video_source is not None:
             # Injected (tests): used as-is, no remux — fakes return ready bytes.
             video_source = segment_video_source
@@ -98,6 +108,7 @@ def create_app(
             app.state.translation_service = service
             app.state.job_runner = EagerJobRunner(service)
             app.state.segment_service = SegmentService(segment_repo, video_source)
+            app.state.metrics_service = metrics_service
             yield
             return
 
@@ -122,6 +133,7 @@ def create_app(
         app.state.translation_service = service
         app.state.job_runner = ArqJobRunner(arq_pool)
         app.state.segment_service = SegmentService(segment_repo, cached_video_source)
+        app.state.metrics_service = metrics_service
         try:
             yield
         finally:
@@ -147,6 +159,7 @@ def create_app(
     app.include_router(translation.router)
     app.include_router(jobs.router)
     app.include_router(segments.router)
+    app.include_router(metrics.router)
 
     @app.get("/health", tags=["meta"])
     async def health() -> dict[str, str]:

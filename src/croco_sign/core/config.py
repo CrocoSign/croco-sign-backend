@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     # Segment catalog: local read-only SQLite built from the corpus CSV + the HF
     # dataset (see scripts/). Override via CROCO_SQLITE_DB_PATH.
     sqlite_db_path: str = "data/pjm.db"
+    # Root for resolving model architecture diagrams. Figure paths in the metrics
+    # catalog are stored relative to the backend root (e.g. resources/fig-spamo.png),
+    # so the default is the working directory. Override via CROCO_RESOURCES_BASE_DIR.
+    resources_base_dir: str = "."
     # HuggingFace WebDataset holding the segment mp4 clips.
     hf_segments_repo_id: str = "croco-corp/pjm-segments"
     hf_segments_split: str = "train"

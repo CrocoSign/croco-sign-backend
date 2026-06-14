@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from croco_sign.api.schemas import ErrorResponse
 from croco_sign.domain.exceptions import (
     DomainError,
+    ExperimentNotFoundError,
     InvalidLanguageError,
     JobNotFoundError,
     ModelNotFoundError,
@@ -29,6 +30,7 @@ _STATUS_MAP: dict[type[DomainError], int] = {
     SegmentNotFoundError: status.HTTP_404_NOT_FOUND,
     SegmentVideoNotFoundError: status.HTTP_404_NOT_FOUND,
     SegmentVideoProcessingError: status.HTTP_502_BAD_GATEWAY,
+    ExperimentNotFoundError: status.HTTP_404_NOT_FOUND,
 }
 
 

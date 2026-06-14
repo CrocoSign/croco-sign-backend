@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from croco_sign.domain.models import Segment, SegmentPage
+from croco_sign.domain.models import (
+    Segment,
+    SegmentFacets,
+    SegmentFilters,
+    SegmentPage,
+)
 from croco_sign.domain.ports import SegmentRepository, SegmentVideoSource
 
 
@@ -15,8 +20,13 @@ class SegmentService:
         self._repository = repository
         self._video_source = video_source
 
-    async def list_segments(self, limit: int, offset: int) -> SegmentPage:
-        return await self._repository.list(limit, offset)
+    async def list_segments(
+        self, limit: int, offset: int, filters: SegmentFilters
+    ) -> SegmentPage:
+        return await self._repository.list(limit, offset, filters)
+
+    async def list_filter_facets(self) -> SegmentFacets:
+        return await self._repository.facets()
 
     async def get_segment(self, id: int) -> Segment:
         return await self._repository.get_by_id(id)

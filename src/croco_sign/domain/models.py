@@ -143,11 +143,107 @@ class SegmentSummary:
     sentence: str
     age: str
     sex: str
+    speaker_id: str
+
+
+@dataclass(frozen=True)
+class SegmentFilters:
+    """Optional narrowing criteria for the segment list.
+
+    `ages`, `sexes` and `speaker_ids` are multi-select: a non-empty tuple matches
+    any of its values (SQL `IN`). `sentence` is a case-insensitive substring
+    search. Empty tuples / `None` mean "no filtering on that field". Tuples (not
+    lists) so the dataclass stays frozen/hashable.
+    """
+
+    ages: tuple[str, ...] = ()
+    sexes: tuple[str, ...] = ()
+    speaker_ids: tuple[str, ...] = ()
+    sentence: str | None = None
+
+
+@dataclass(frozen=True)
+class SegmentFacets:
+    """The distinct values available for each dropdown filter on the list."""
+
+    ages: list[str]
+    sexes: list[str]
+    speaker_ids: list[str]
 
 
 @dataclass(frozen=True)
 class SegmentPage:
-    """A page of segment summaries plus the unfiltered total for pagination UIs."""
+    """A page of segment summaries plus the total matching the active filters."""
 
     items: list[SegmentSummary]
     total: int
+
+
+# --- Benchmark metrics ------------------------------------------------------
+# A small read-only catalog of model evaluation experiments and their scores,
+# built offline from metrics.md (see scripts/metrics_to_sqlite.py). Named
+# `BenchmarkModel` to avoid clashing with the translation registry's `ModelInfo`.
+
+
+@dataclass(frozen=True)
+class BenchmarkModel:
+    """A translation architecture that was evaluated (e.g. SpaMo, Uni-Sign)."""
+
+    id: int
+    display_name: str
+    architecture_fig: str  # path to the architecture diagram, relative to resources base
+
+
+@dataclass(frozen=True)
+class MetricDefinition:
+    """An evaluation metric (e.g. BLEU-4) with a human-readable description."""
+
+    id: int
+    name: str
+    description: str
+
+
+@dataclass(frozen=True)
+class ExperimentScore:
+    """One metric's value for a single experiment, with the metric definition."""
+
+    metric: MetricDefinition
+    value: float
+
+
+@dataclass(frozen=True)
+class Experiment:
+    """The detail aggregate for one evaluation run: a model under a setup, scored.
+
+    `transfer_source` is the pretraining/transfer dataset (or "brak …" for none)
+    and `split` is the evaluation split (e.g. MS / SI).
+    """
+
+    id: int
+    transfer_source: str
+    split: str
+    model: BenchmarkModel
+    scores: list[ExperimentScore]
+
+
+@dataclass(frozen=True)
+class ExperimentRow:
+    """A row in the metrics matrix: one experiment with its scores keyed by name.
+
+    `scores` maps metric name -> value, so the list view can look up cells by the
+    ordered column names carried in `MetricsTable.metrics`.
+    """
+
+    id: int
+    model: BenchmarkModel
+    transfer_source: str
+    split: str
+    scores: dict[str, float]
+
+
+@dataclass(frozen=True)
+class MetricsTable:
+    """The full benchmark matrix: the metric columns plus one row per experiment."""
+
+    metrics: list[MetricDefinition]
+    experiments: list[ExperimentRow]

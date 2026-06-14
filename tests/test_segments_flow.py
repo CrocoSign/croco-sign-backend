@@ -15,10 +15,59 @@ def test_list_segments_returns_summaries_and_total(segments_client: TestClient) 
     assert body["total"] == 2
     assert len(body["items"]) == 2
     first = body["items"][0]
-    assert set(first) == {"id", "segment_id", "sentence", "age", "sex"}
+    assert set(first) == {"id", "segment_id", "sentence", "age", "sex", "speaker_id"}
     assert first["segment_id"] == "004_000_M"
     assert first["age"] == "46-60"
     assert first["sex"] == "F"
+    assert first["speaker_id"] == "F_46-60_001"
+
+
+def test_list_segments_filters_by_sex(segments_client: TestClient) -> None:
+    page = segments_client.get("/segments", params={"sex": "M"}).json()
+    assert page["total"] == 1  # total reflects the filter
+    assert [item["id"] for item in page["items"]] == [2]
+    assert page["items"][0]["speaker_id"] == "M_18-30_002"
+
+
+def test_list_segments_filters_by_multiple_values(segments_client: TestClient) -> None:
+    # Repeated query params union their matches (?sex=F&sex=M).
+    page = segments_client.get("/segments", params={"sex": ["F", "M"]}).json()
+    assert page["total"] == 2
+    assert [item["id"] for item in page["items"]] == [1, 2]
+
+
+def test_list_segments_filters_by_age_and_speaker_id(
+    segments_client: TestClient,
+) -> None:
+    by_age = segments_client.get("/segments", params={"age": "46-60"}).json()
+    assert [item["id"] for item in by_age["items"]] == [1]
+    by_signer = segments_client.get(
+        "/segments", params={"speaker_id": "M_18-30_002"}
+    ).json()
+    assert [item["id"] for item in by_signer["items"]] == [2]
+
+
+def test_list_segments_searches_sentence_case_insensitively(
+    segments_client: TestClient,
+) -> None:
+    page = segments_client.get("/segments", params={"sentence": "KOT"}).json()
+    assert page["total"] == 1
+    assert page["items"][0]["id"] == 1
+
+
+def test_list_segments_combines_filters(segments_client: TestClient) -> None:
+    page = segments_client.get(
+        "/segments", params={"sex": "F", "sentence": "druga"}
+    ).json()
+    assert page["total"] == 0
+    assert page["items"] == []
+
+
+def test_segment_filters_facets(segments_client: TestClient) -> None:
+    body = segments_client.get("/segments/filters").json()
+    assert body["ages"] == ["18-30", "46-60"]
+    assert body["sexes"] == ["F", "M"]
+    assert body["speaker_ids"] == ["F_46-60_001", "M_18-30_002"]
 
 
 def test_list_segments_paginates_with_limit_and_offset(

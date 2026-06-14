@@ -7,11 +7,18 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from croco_sign.domain.models import (
+    BenchmarkModel,
+    Experiment,
+    ExperimentRow,
+    ExperimentScore,
     Job,
     JobStatus,
     Language,
+    MetricDefinition,
+    MetricsTable,
     ModelInfo,
     Segment,
+    SegmentFacets,
     SegmentPage,
     SegmentSummary,
     Signer,
@@ -95,6 +102,7 @@ class SegmentSummaryResponse(BaseModel):
     sentence: str
     age: str
     sex: str
+    speaker_id: str
 
     @classmethod
     def from_domain(cls, summary: SegmentSummary) -> "SegmentSummaryResponse":
@@ -104,6 +112,23 @@ class SegmentSummaryResponse(BaseModel):
             sentence=summary.sentence,
             age=summary.age,
             sex=summary.sex,
+            speaker_id=summary.speaker_id,
+        )
+
+
+class SegmentFacetsResponse(BaseModel):
+    """Distinct values for the list's dropdown filters."""
+
+    ages: list[str]
+    sexes: list[str]
+    speaker_ids: list[str]
+
+    @classmethod
+    def from_domain(cls, facets: SegmentFacets) -> "SegmentFacetsResponse":
+        return cls(
+            ages=facets.ages,
+            sexes=facets.sexes,
+            speaker_ids=facets.speaker_ids,
         )
 
 
@@ -174,4 +199,93 @@ class SegmentDetailResponse(BaseModel):
             segment_id=segment.segment_id,
             sentence=segment.sentence,
             video_metadata=VideoMetadataResponse.from_domain(segment.video_metadata),
+        )
+
+
+# --- Metrics ----------------------------------------------------------------
+# The benchmark matrix (GET /metrics) and per-experiment detail
+# (GET /experiments/{id}). The architecture diagram is served as bytes by a
+# separate endpoint, so it is not a field here.
+
+
+class BenchmarkModelResponse(BaseModel):
+    id: int
+    display_name: str
+
+    @classmethod
+    def from_domain(cls, model: BenchmarkModel) -> "BenchmarkModelResponse":
+        return cls(id=model.id, display_name=model.display_name)
+
+
+class MetricDefinitionResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+
+    @classmethod
+    def from_domain(cls, metric: MetricDefinition) -> "MetricDefinitionResponse":
+        return cls(id=metric.id, name=metric.name, description=metric.description)
+
+
+class ExperimentRowResponse(BaseModel):
+    id: int
+    model: BenchmarkModelResponse
+    transfer_source: str
+    split: str
+    scores: dict[str, float]
+
+    @classmethod
+    def from_domain(cls, row: ExperimentRow) -> "ExperimentRowResponse":
+        return cls(
+            id=row.id,
+            model=BenchmarkModelResponse.from_domain(row.model),
+            transfer_source=row.transfer_source,
+            split=row.split,
+            scores=row.scores,
+        )
+
+
+class MetricsTableResponse(BaseModel):
+    metrics: list[MetricDefinitionResponse]
+    experiments: list[ExperimentRowResponse]
+
+    @classmethod
+    def from_domain(cls, table: MetricsTable) -> "MetricsTableResponse":
+        return cls(
+            metrics=[MetricDefinitionResponse.from_domain(m) for m in table.metrics],
+            experiments=[
+                ExperimentRowResponse.from_domain(e) for e in table.experiments
+            ],
+        )
+
+
+class ExperimentScoreResponse(BaseModel):
+    metric: MetricDefinitionResponse
+    value: float
+
+    @classmethod
+    def from_domain(cls, score: ExperimentScore) -> "ExperimentScoreResponse":
+        return cls(
+            metric=MetricDefinitionResponse.from_domain(score.metric),
+            value=score.value,
+        )
+
+
+class ExperimentDetailResponse(BaseModel):
+    id: int
+    transfer_source: str
+    split: str
+    model: BenchmarkModelResponse
+    scores: list[ExperimentScoreResponse]
+
+    @classmethod
+    def from_domain(cls, experiment: Experiment) -> "ExperimentDetailResponse":
+        return cls(
+            id=experiment.id,
+            transfer_source=experiment.transfer_source,
+            split=experiment.split,
+            model=BenchmarkModelResponse.from_domain(experiment.model),
+            scores=[
+                ExperimentScoreResponse.from_domain(s) for s in experiment.scores
+            ],
         )

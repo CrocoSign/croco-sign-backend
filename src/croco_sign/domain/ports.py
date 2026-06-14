@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import AsyncIterator, Protocol, runtime_checkable
 
+from croco_sign.domain.models import Experiment, MetricsTable
 from croco_sign.domain.models import Job
-from croco_sign.domain.models import Segment, SegmentPage
+from croco_sign.domain.models import Segment, SegmentFacets, SegmentFilters, SegmentPage
 from croco_sign.domain.models import SpokenTranslationInput
 
 @runtime_checkable
@@ -82,12 +83,30 @@ class JobRunner(Protocol):
 class SegmentRepository(Protocol):
     """Read port for the local relational segment catalog (SQLite today)."""
 
-    async def list(self, limit: int, offset: int) -> SegmentPage:
-        """Return a page of segment summaries plus the unfiltered total count."""
+    async def list(
+        self, limit: int, offset: int, filters: SegmentFilters
+    ) -> SegmentPage:
+        """Return a page of segment summaries plus the total matching `filters`."""
         ...
 
     async def get_by_id(self, id: int) -> Segment:
         """Return the full segment aggregate, or raise SegmentNotFoundError."""
+        ...
+
+    async def facets(self) -> SegmentFacets:
+        """Return the distinct values available for each dropdown filter."""
+        ...
+
+
+class MetricsRepository(Protocol):
+    """Read port for the local benchmark-metrics catalog (SQLite today)."""
+
+    async def list_metrics_table(self) -> MetricsTable:
+        """Return the full matrix: metric columns plus one row per experiment."""
+        ...
+
+    async def get_experiment(self, id: int) -> Experiment:
+        """Return the full experiment aggregate, or raise ExperimentNotFoundError."""
         ...
 
 

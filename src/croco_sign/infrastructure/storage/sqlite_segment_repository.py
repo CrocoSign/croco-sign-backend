@@ -15,22 +15,53 @@ import sqlite3
 from croco_sign.domain.exceptions import SegmentNotFoundError
 from croco_sign.domain.models import (
     Segment,
+    SegmentFacets,
+    SegmentFilters,
     SegmentPage,
     SegmentSummary,
     Signer,
     VideoMetadata,
 )
 
-_LIST_SQL = """
-SELECT s.id, s.segment_id, s.sentence, sg.age, sg.sex
+# Shared FROM clause for both the list page and its (filtered) count, so the two
+# always see the same rows. The `signer` join is always present because filters
+# and the projection both reach into it.
+_FROM = """
 FROM segment s
 JOIN video_metadata vm ON vm.id = s.video_metadata_id
 JOIN signer sg         ON sg.id = vm.signer_id
-ORDER BY s.id
-LIMIT ? OFFSET ?
 """
 
-_COUNT_SQL = "SELECT COUNT(*) FROM segment"
+_LIST_SELECT = "SELECT s.id, s.segment_id, s.sentence, sg.age, sg.sex, sg.speaker_id"
+
+_FACETS_SQL = {
+    "ages": f"SELECT DISTINCT sg.age {_FROM} ORDER BY sg.age",
+    "sexes": f"SELECT DISTINCT sg.sex {_FROM} ORDER BY sg.sex",
+    "speaker_ids": f"SELECT DISTINCT sg.speaker_id {_FROM} ORDER BY sg.speaker_id",
+}
+
+
+def _where(filters: SegmentFilters) -> tuple[str, list[object]]:
+    """Build a WHERE fragment (incl. leading 'WHERE' or empty) and its params."""
+    clauses: list[str] = []
+    params: list[object] = []
+    # Multi-select fields: a non-empty tuple matches any of its values.
+    for column, values in (
+        ("sg.age", filters.ages),
+        ("sg.sex", filters.sexes),
+        ("sg.speaker_id", filters.speaker_ids),
+    ):
+        if values:
+            placeholders = ", ".join("?" * len(values))
+            clauses.append(f"{column} IN ({placeholders})")
+            params.extend(values)
+    if filters.sentence is not None:
+        clauses.append("s.sentence LIKE ? COLLATE NOCASE")
+        params.append(f"%{filters.sentence}%")
+    if not clauses:
+        return "", params
+    return "WHERE " + " AND ".join(clauses), params
+
 
 _DETAIL_SQL = """
 SELECT
@@ -62,22 +93,32 @@ class SqliteSegmentRepository:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
 
-    async def list(self, limit: int, offset: int) -> SegmentPage:
-        return await asyncio.to_thread(self._list_sync, limit, offset)
+    async def list(
+        self, limit: int, offset: int, filters: SegmentFilters
+    ) -> SegmentPage:
+        return await asyncio.to_thread(self._list_sync, limit, offset, filters)
 
     async def get_by_id(self, id: int) -> Segment:
         return await asyncio.to_thread(self._get_by_id_sync, id)
+
+    async def facets(self) -> SegmentFacets:
+        return await asyncio.to_thread(self._facets_sync)
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self._db_path, check_same_thread=False)
         con.row_factory = sqlite3.Row
         return con
 
-    def _list_sync(self, limit: int, offset: int) -> SegmentPage:
+    def _list_sync(
+        self, limit: int, offset: int, filters: SegmentFilters
+    ) -> SegmentPage:
+        where, params = _where(filters)
+        list_sql = f"{_LIST_SELECT} {_FROM} {where} ORDER BY s.id LIMIT ? OFFSET ?"
+        count_sql = f"SELECT COUNT(*) {_FROM} {where}"
         con = self._connect()
         try:
-            rows = con.execute(_LIST_SQL, (limit, offset)).fetchall()
-            total = con.execute(_COUNT_SQL).fetchone()[0]
+            rows = con.execute(list_sql, (*params, limit, offset)).fetchall()
+            total = con.execute(count_sql, tuple(params)).fetchone()[0]
         finally:
             con.close()
         items = [
@@ -87,10 +128,26 @@ class SqliteSegmentRepository:
                 sentence=row["sentence"],
                 age=row["age"],
                 sex=row["sex"],
+                speaker_id=row["speaker_id"],
             )
             for row in rows
         ]
         return SegmentPage(items=items, total=total)
+
+    def _facets_sync(self) -> SegmentFacets:
+        con = self._connect()
+        try:
+            values = {
+                key: [row[0] for row in con.execute(sql).fetchall()]
+                for key, sql in _FACETS_SQL.items()
+            }
+        finally:
+            con.close()
+        return SegmentFacets(
+            ages=values["ages"],
+            sexes=values["sexes"],
+            speaker_ids=values["speaker_ids"],
+        )
 
     def _get_by_id_sync(self, id: int) -> Segment:
         con = self._connect()

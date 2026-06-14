@@ -71,3 +71,9 @@ class SegmentVideoProcessingError(DomainError):
     """A segment clip was found but could not be transcoded for delivery."""
 
     code = "segment_video_processing_error"
+
+
+class ExperimentNotFoundError(DomainError):
+    """Requested experiment id does not exist in the metrics catalog."""
+
+    code = "experiment_not_found"
