@@ -38,3 +38,5 @@ croco-*.video
 .vscode/
 *.swp
 .DS_Store
+
+data/*
