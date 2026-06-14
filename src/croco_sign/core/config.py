@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     
     deepl_key: str
 
+    # Redis: shared job store + pub/sub and the arq task queue broker. Override
+    # via CROCO_REDIS_URL (e.g. redis://redis:6379/0 under docker compose).
+    redis_url: str = "redis://localhost:6379/0"
+    # How long a job's state survives in Redis; refreshed on every update so an
+    # actively-watched job never expires mid-flight.
+    job_ttl_seconds: int = 24 * 3600
+    # How long an uploaded video lingers in Redis before the worker consumes it.
+    video_ttl_seconds: int = 3600
+
 
 @lru_cache
 def get_settings() -> Settings:

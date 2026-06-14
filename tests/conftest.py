@@ -24,8 +24,13 @@ class MockSpokenLanguageTranslator:
 
 @pytest.fixture
 def client() -> TestClient:
-    # TestClient runs lifespan (composition root) on enter/exit. Inject a mock
+    # TestClient runs lifespan (composition root) on enter/exit. eager_processing
+    # uses the in-memory store + in-process execution (no Redis/arq), so jobs
+    # complete within the request like the old BackgroundTasks path. Inject a mock
     # spoken translator so no real model is loaded.
-    app = create_app(spoken_translator=MockSpokenLanguageTranslator())
+    app = create_app(
+        spoken_translator=MockSpokenLanguageTranslator(),
+        eager_processing=True,
+    )
     with TestClient(app) as test_client:
         yield test_client

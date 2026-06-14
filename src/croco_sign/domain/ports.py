@@ -46,3 +46,33 @@ class JobStore(Protocol):
 class SpokenLanguageTranslator(Protocol):
     def translate(self, input: SpokenTranslationInput) -> str:
         ...
+
+
+class VideoStore(Protocol):
+    """Shared blob storage for uploaded videos, keyed by job id.
+
+    The API receives the upload but processing runs in a separate worker, so the
+    bytes must live somewhere both can reach. Adapters in `infrastructure`
+    implement this (Redis today; S3/MinIO is a drop-in later).
+    """
+
+    async def put(self, key: str, data: bytes) -> None:
+        ...
+
+    async def get(self, key: str) -> bytes:
+        """Return the stored bytes, or raise VideoNotFoundError if absent."""
+        ...
+
+    async def remove(self, key: str) -> None:
+        ...
+
+
+class JobRunner(Protocol):
+    """Triggers processing of a previously-created job.
+
+    Production enqueues onto a task queue so a separate worker runs it; tests run
+    it in-process. Adapters live in the service/infrastructure layers.
+    """
+
+    async def run(self, job_id: str) -> None:
+        ...

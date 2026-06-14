@@ -7,16 +7,13 @@ services:
       # Settings are read from env with the CROCO_ prefix (see core/config.py).
       # Override here or via a .env file as needed, e.g.:
       # CROCO_CORS_ALLOW_ORIGINS: '["http://localhost:3000"]'
-      HF_HOME: /cache/huggingface
+      CROCO_REDIS_URL: redis://redis:6379/0
     env_file:
       # Optional: create a .env to inject secrets/overrides. Won't fail if absent.
       - path: .env
         required: false
-    volumes:
-      # Reuse the host's HuggingFace cache so the ~5GB NLLB model is shared with
-      # the container instead of re-downloaded. Override the host path by setting
-      # HF_CACHE_DIR; defaults to the standard ~/.cache/huggingface location.
-      - ${HF_CACHE_DIR:-${HOME}/.cache/huggingface}:/cache/huggingface
+    depends_on:
+      - redis
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -25,16 +22,25 @@ services:
       start_period: 120s
     restart: unless-stopped
 
-  # Redis is wired up but commented out until a feature needs it. Uncomment,
-  # then point the app at it with e.g. CROCO_REDIS_URL=redis://redis:6379/0.
-  # redis:
-  #   image: redis:7-alpine
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis-data:/data
-  #   restart: unless-stopped
+  worker:
+    build: .
+    command: ["arq", "croco_sign.worker.WorkerSettings"]
+    environment:
+      CROCO_REDIS_URL: redis://redis:6379/0
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      - redis
+    restart: unless-stopped
 
-# Uncomment alongside the redis service above.
-# volumes:
-#   redis-data:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  redis-data:

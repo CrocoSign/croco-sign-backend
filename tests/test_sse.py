@@ -53,7 +53,7 @@ async def test_sse_survives_heartbeat_for_slow_job(
     # so we drive the job lifecycle directly while streaming over ASGI.
     monkeypatch.setattr(jobs_router, "_HEARTBEAT_SECONDS", 0.1)
 
-    app = create_app()
+    app = create_app(eager_processing=True)
     async with app.router.lifespan_context(app):
         service = app.state.translation_service
         job = await service.submit("mock", Language.POLISH)

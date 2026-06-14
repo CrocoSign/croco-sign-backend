@@ -47,3 +47,9 @@ class TranslationFailedError(DomainError):
     """The translator failed to produce a result."""
 
     code = "translation_failed"
+
+
+class VideoNotFoundError(DomainError):
+    """Stored video bytes are missing (never stored, or expired)."""
+
+    code = "video_not_found"

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from pathlib import Path
 from typing import AsyncIterator
 from uuid import uuid4
 
@@ -15,8 +14,7 @@ from croco_sign.domain.models import (
     SpokenTranslationInput,
     TranslationResult,
 )
-from croco_sign.domain.ports import JobStore, SpokenLanguageTranslator
-from croco_sign.infrastructure.storage.video_storage import VideoStorage
+from croco_sign.domain.ports import JobStore, SpokenLanguageTranslator, VideoStore
 from croco_sign.infrastructure.translators.registry import TranslatorRegistry
 
 logger = logging.getLogger(__name__)
@@ -29,12 +27,12 @@ class TranslationService:
         self,
         registry: TranslatorRegistry,
         job_store: JobStore,
-        video_storage: VideoStorage,
+        video_store: VideoStore,
         spoken_translator: SpokenLanguageTranslator,
     ) -> None:
         self._registry = registry
         self._job_store = job_store
-        self._storage = video_storage
+        self._video_store = video_store
         self._spoken_translator = spoken_translator
 
     def list_models(self) -> list[ModelInfo]:
@@ -63,11 +61,12 @@ class TranslationService:
         """Stream a job's state changes until it reaches a terminal status."""
         return self._job_store.subscribe(job_id)
 
-    async def process(self, job_id: str, video_path: Path) -> None:
+    async def process(self, job_id: str) -> None:
         """Run the translation in the background and persist the outcome.
 
-        Blocking inference and disk reads run in worker threads so the event loop
-        stays responsive.
+        The video bytes are fetched from the shared `VideoStore` (the worker may
+        be a different process than the API that received the upload). Blocking
+        inference runs in worker threads so the event loop stays responsive.
         """
         job = await self._job_store.get(job_id)
         job.mark_running()
@@ -75,7 +74,7 @@ class TranslationService:
 
         try:
             pjm = self._registry.get(job.model_name)
-            video = await asyncio.to_thread(self._storage.read_bytes, video_path)
+            video = await self._video_store.get(job_id)
             # Stage 1: recognize the sign video into English text.
             recognized = await asyncio.to_thread(pjm.translate, video)
             # Stage 2: translate the English text into the target language.
@@ -97,6 +96,6 @@ class TranslationService:
             logger.exception("Translation job %s failed", job_id)
             job.mark_failed(str(exc))
         finally:
-            self._storage.remove(video_path)
+            await self._video_store.remove(job_id)
 
         await self._job_store.update(job)
