@@ -21,13 +21,17 @@ CREATE TABLE IF NOT EXISTS signer (
 
 CREATE TABLE IF NOT EXISTS video_metadata (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    video_id        INTEGER NOT NULL UNIQUE,
+    video_id        INTEGER NOT NULL,
     video_url       TEXT    NOT NULL,
     subtitles_url   TEXT    NOT NULL,
     video_type      TEXT    NOT NULL,
     task_id         INTEGER NOT NULL,
     speaker_side    TEXT    NOT NULL,
-    signer_id       INTEGER NOT NULL REFERENCES signer(id)
+    signer_id       INTEGER NOT NULL REFERENCES signer(id),
+    -- A dialog video has two sources (left/right speaker), so video_id alone is
+    -- NOT unique - the natural key is (video_id, speaker_side). The old
+    -- UNIQUE(video_id) silently dropped every right-side row on INSERT OR IGNORE.
+    UNIQUE (video_id, speaker_side)
 );
 
 CREATE INDEX IF NOT EXISTS idx_video_metadata_signer ON video_metadata(signer_id);
