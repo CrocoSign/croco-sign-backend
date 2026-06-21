@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     
     deepl_key: str
 
+    # PJM inference service: the unified croco `/translate` URL. Required, with no
+    # fallback — set CROCO_INFERENCE_ENDPOINT to whichever host runs pjm-models
+    # (a local container, an AWS GPU/CPU instance, or a Tailscale address). Switch
+    # targets by changing this value and restarting the API + worker.
+    inference_endpoint: str
+
     # Redis: shared job store + pub/sub and the arq task queue broker. Override
     # via CROCO_REDIS_URL (e.g. redis://redis:6379/0 under docker compose).
     redis_url: str = "redis://localhost:6379/0"

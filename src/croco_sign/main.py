@@ -65,7 +65,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Composition root: instantiate adapters and the service once.
-        registry = build_default_registry()
+        registry = build_default_registry(settings.inference_endpoint)
         video_reader = VideoStorage(max_bytes=settings.max_upload_bytes)
         translator = spoken_translator
         if translator is None:

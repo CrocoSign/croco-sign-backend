@@ -38,7 +38,7 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     configure_logging()
     settings = get_settings()
     redis = Redis.from_url(settings.redis_url, decode_responses=False)
-    registry = build_default_registry()
+    registry = build_default_registry(settings.inference_endpoint)
     job_store = RedisJobStore(redis, ttl_seconds=settings.job_ttl_seconds)
     video_store = RedisVideoStore(redis, ttl_seconds=settings.video_ttl_seconds)
     translator = DeeplSpokenLanguageTranslator(auth_key=settings.deepl_key)

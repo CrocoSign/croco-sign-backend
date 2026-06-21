@@ -54,6 +54,11 @@ Settings load from the environment with the `CROCO_` prefix (or a `.env` file). 
 | Max upload size (bytes) | `CROCO_MAX_UPLOAD_BYTES` | `104857600` (100 MiB) |
 | Allowed video MIME types | `CROCO_ALLOWED_MIME_TYPES` | mp4, quicktime, webm, matroska |
 | CORS allowed origins | `CROCO_CORS_ALLOW_ORIGINS` | `["*"]` (lock down in production) |
+| PJM inference endpoint | `CROCO_INFERENCE_ENDPOINT` | **required** — unified croco `/translate` URL; no fallback |
+
+`CROCO_INFERENCE_ENDPOINT` is the only place the inference host is configured: point it at a local
+`pjm-models` container (`http://inference:8000/translate`), an AWS instance, or a Tailscale address.
+Switch targets by changing it and restarting the API **and** the worker.
 
 ## API
 

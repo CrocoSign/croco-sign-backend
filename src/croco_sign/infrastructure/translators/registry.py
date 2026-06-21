@@ -31,8 +31,6 @@ class TranslatorRegistry:
         return [ModelInfo(name=name) for name in self._translators]
 
 
-CROCO_ENDPOINT = "http://100.117.203.112:8000/translate"
-
 # Every model exposed by the unified croco service (GET /models). The registry
 # key is the model's canonical name, which is also what the service expects.
 CROCO_MODELS = (
@@ -54,14 +52,20 @@ CROCO_MODELS = (
     "unisign-pjm-scratch-si",
 )
 
-def build_default_registry() -> TranslatorRegistry:
-    """Create the registry with all translators wired up."""
+def build_default_registry(endpoint: str) -> TranslatorRegistry:
+    """Create the registry with all translators wired up.
+
+    `endpoint` is the unified croco `/translate` URL (from
+    `Settings.inference_endpoint` / `CROCO_INFERENCE_ENDPOINT`). There is no
+    fallback: callers must pass an explicit target so the inference host is never
+    silently pinned to a hardcoded address.
+    """
     registry = TranslatorRegistry()
     registry.register("mock", MockPJMTranslator())
     for model_name in CROCO_MODELS:
         registry.register(
             model_name,
-            UnifiedCrocoTranslator(model_name=model_name, endpoint=CROCO_ENDPOINT),
+            UnifiedCrocoTranslator(model_name=model_name, endpoint=endpoint),
         )
 
     return registry
