@@ -23,6 +23,7 @@ dist/
 .coverage.*
 htmlcov/
 coverage.xml
+coverage.json
 
 # Environment / secrets
 .env

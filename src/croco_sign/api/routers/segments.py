@@ -72,5 +72,6 @@ async def get_segment_video(
             "Content-Disposition": "inline",
             "Cache-Control": "public, max-age=3600",
             "Accept-Ranges": "none",
+            "Vary": "Origin",
         },
     )

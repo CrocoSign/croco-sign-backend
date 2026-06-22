@@ -22,6 +22,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "fakeredis>=2.20.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [build-system]
@@ -34,3 +35,10 @@ packages = ["src/croco_sign"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/croco_sign"]
+
+[tool.coverage.report]
+show_missing = true
