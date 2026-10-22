@@ -106,4 +106,4 @@ Our code is under the MIT licence (see `LICENSE`). The corpus clips served by th
 
 ## Authors
 
-Wojciech Sieńko and Rostyslav Kovalenko, PJATK engineering thesis, supervised by dr Albert Śledzianowski, MBA.
+[Wojciech Sieńko](https://www.linkedin.com/in/wojciech-sie%C5%84ko/) and [Rostyslav Kovalenko](https://www.linkedin.com/in/rost-koff/), PJATK engineering thesis, supervised by dr Albert Śledzianowski, MBA.
