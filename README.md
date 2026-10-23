@@ -102,7 +102,7 @@ CROCO_DEEPL_KEY=placeholder CROCO_INFERENCE_ENDPOINT=http://localhost:9/translat
 
 ## License
 
-Our code is under the MIT licence (see `LICENSE`). The corpus clips served by this app come from the Open Repository of the PJM Corpus (University of Warsaw), which is non-commercial only.
+Our code is under the MIT licence (see `LICENSE`). The corpus clips served by this app come from the Open Repository of the PJM Corpus (University of Warsaw), licensed under CC BY-SA 4.0.
 
 ## Authors
 
