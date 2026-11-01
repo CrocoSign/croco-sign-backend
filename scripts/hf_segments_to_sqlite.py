@@ -13,7 +13,7 @@ from pathlib import Path
 
 from datasets import Value, load_dataset
 
-REPO_ID = "croco-corp/pjm-segments"
+REPO_ID = "CrocoSign/pjm-segments"
 
 SIDE_MAP = {"M": "-", "L": "left", "R": "right"}
 

@@ -10,7 +10,7 @@ All repositories are under [github.com/crocosign](https://github.com/crocosign),
 
 CrocoSign (data preparation) -> SpaMo-PJM / Uni-Sign-PJM (training) -> pjm-models (inference) -> **croco-sign-backend** / [croco-sign-frontend](https://github.com/crocosign/croco-sign-frontend) (app).
 
-The frontend calls this API, by default on the same host as the frontend, port 8000. This API calls the pjm-models server at `CROCO_INFERENCE_ENDPOINT`. Corpus clips are streamed from the Hugging Face dataset [croco-corp/pjm-segments](https://huggingface.co/datasets/croco-corp/pjm-segments) (the unfiltered segments, about 40k, as WebDataset shards). The filtered set of 29,932 pairs, with features, splits, translations and videos, is in [croco-corp/pjm-data](https://huggingface.co/datasets/croco-corp/pjm-data).
+The frontend calls this API, by default on the same host as the frontend, port 8000. This API calls the pjm-models server at `CROCO_INFERENCE_ENDPOINT`. Corpus clips are streamed from the Hugging Face dataset [CrocoSign/pjm-segments](https://huggingface.co/datasets/CrocoSign/pjm-segments) (the unfiltered segments, about 40k, as WebDataset shards). The filtered set of 29,932 pairs, with features, splits, translations and videos, is in [CrocoSign/pjm-data](https://huggingface.co/datasets/CrocoSign/pjm-data).
 
 ## Requirements
 
@@ -38,7 +38,7 @@ Optional (defaults in brackets):
 - `CROCO_CORS_ALLOW_ORIGINS` [`["*"]`, JSON list; restrict it in production]
 - `CROCO_SQLITE_DB_PATH` [`data/pjm.db`]
 - `CROCO_RESOURCES_BASE_DIR` [`.`, base for architecture diagrams in `resources/`]
-- `CROCO_HF_SEGMENTS_REPO_ID` [`croco-corp/pjm-segments`], `CROCO_HF_SEGMENTS_SPLIT` [`train`]
+- `CROCO_HF_SEGMENTS_REPO_ID` [`CrocoSign/pjm-segments`], `CROCO_HF_SEGMENTS_SPLIT` [`train`]
 - `CROCO_JOB_TTL_SECONDS`, `CROCO_VIDEO_TTL_SECONDS`, `CROCO_SEGMENT_VIDEO_TTL_SECONDS`
 
 ## Run locally
@@ -70,7 +70,7 @@ uv run python scripts/hf_segments_to_sqlite.py data/pjm.db
 uv run python scripts/metrics_to_sqlite.py <metrics markdown table> data/pjm.db
 ```
 
-The corpus metadata CSV (signer and video metadata) is `dialogs_data.csv` in the [croco-corp/pjm-data](https://huggingface.co/datasets/croco-corp/pjm-data) dataset. The metrics markdown table that `metrics_to_sqlite.py` reads is not published, so `/metrics` cannot be rebuilt from public sources; we did not find a public copy. Neither input is in this repository. Model architecture figures are in `resources/`.
+The corpus metadata CSV (signer and video metadata) is `dialogs_data.csv` in the [CrocoSign/pjm-data](https://huggingface.co/datasets/CrocoSign/pjm-data) dataset. The metrics markdown table that `metrics_to_sqlite.py` reads is not published, so `/metrics` cannot be rebuilt from public sources; we did not find a public copy. Neither input is in this repository. Model architecture figures are in `resources/`.
 
 ## API
 
@@ -102,8 +102,8 @@ CROCO_DEEPL_KEY=placeholder CROCO_INFERENCE_ENDPOINT=http://localhost:9/translat
 
 ## License
 
-Our code is under the MIT licence (see `LICENSE`). The corpus clips served by this app come from the Open Repository of the PJM Corpus (University of Warsaw), which is non-commercial only.
+Our code is under the MIT licence (see `LICENSE`). The corpus clips served by this app come from the Open Repository of the PJM Corpus (University of Warsaw), licensed under CC BY-SA 4.0.
 
 ## Authors
 
-Wojciech Sieńko and Rostyslav Kovalenko, PJATK engineering thesis, supervised by dr Albert Śledzianowski, MBA.
+[Wojciech Sieńko](https://www.linkedin.com/in/wojciech-sie%C5%84ko/) and [Rostyslav Kovalenko](https://www.linkedin.com/in/rost-koff/), PJATK engineering thesis, supervised by dr Albert Śledzianowski, MBA.
