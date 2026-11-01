@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     # so the default is the working directory. Override via CROCO_RESOURCES_BASE_DIR.
     resources_base_dir: str = "."
     # HuggingFace WebDataset holding the segment mp4 clips.
-    hf_segments_repo_id: str = "croco-corp/pjm-segments"
+    hf_segments_repo_id: str = "CrocoSign/pjm-segments"
     hf_segments_split: str = "train"
     # How long a fetched segment clip lingers in the Redis read-through cache.
     segment_video_ttl_seconds: int = 24 * 3600
