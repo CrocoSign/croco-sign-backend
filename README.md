@@ -6,7 +6,7 @@ This is a research prototype, not a replacement for an interpreter.
 
 ## Where this fits
 
-All repositories are under [github.com/crocosign](https://github.com/crocosign), project site https://crocosign.github.io:
+All repositories are under [github.com/crocosign](https://github.com/crocosign), project site https://crocosign.pl:
 
 CrocoSign (data preparation) -> SpaMo-PJM / Uni-Sign-PJM (training) -> pjm-models (inference) -> **croco-sign-backend** / [croco-sign-frontend](https://github.com/crocosign/croco-sign-frontend) (app).
 
